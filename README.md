@@ -38,3 +38,7 @@ Project ini merupakan tugas besar untuk mata kuliah Rekayasa Perangkat Lunak, De
 2. Yunita Dwi Ardilasari - 21120124120001
 3. Myesha Azka Hafizha - 21120124130090
 4. Syauqi Akifur Rahman - 21120124130097
+
+
+## Berikut link ProXperty
+1. UI/UX: https://www.figma.com/design/z4cdE9A5dkzkcPkCu8rzze/Mockup-ProXperty?node-id=1-2&p=f&t=uvlc49b6ysIh0wXt-0
