@@ -113,99 +113,11 @@
             <h3>Properti Disewa</h3>
         </div>
 
-            <div class="row g-5">
-         @php
-        $properties = [
-            // SEMARANG
-            ['img'=>1,'lokasi'=>'semarang','tipe'=>'rumah','harga'=>150000000],
-            ['img'=>2,'lokasi'=>'semarang','tipe'=>'apartement','harga'=>120000000],
-            ['img'=>3,'lokasi'=>'semarang','tipe'=>'villa','harga'=>200000000],
-
-            // JAKARTA
-            ['img'=>1,'lokasi'=>'jakarta','tipe'=>'rumah','harga'=>180000000],
-            ['img'=>2,'lokasi'=>'jakarta','tipe'=>'apartement','harga'=>100000000],
-            ['img'=>3,'lokasi'=>'jakarta','tipe'=>'villa','harga'=>220000000],
-
-            // BANDUNG
-            ['img'=>1,'lokasi'=>'bandung','tipe'=>'rumah','harga'=>140000000],
-            ['img'=>2,'lokasi'=>'bandung','tipe'=>'apartement','harga'=>110000000],
-            ['img'=>3,'lokasi'=>'bandung','tipe'=>'villa','harga'=>190000000],
-
-            // SURABAYA
-            ['img'=>1,'lokasi'=>'surabaya','tipe'=>'rumah','harga'=>160000000],
-            ['img'=>2,'lokasi'=>'surabaya','tipe'=>'apartement','harga'=>130000000],
-            ['img'=>3,'lokasi'=>'surabaya','tipe'=>'villa','harga'=>210000000],
-
-            // YOGYAKARTA
-            ['img'=>1,'lokasi'=>'yogyakarta','tipe'=>'rumah','harga'=>130000000],
-            ['img'=>2,'lokasi'=>'yogyakarta','tipe'=>'apartement','harga'=>90000000],
-            ['img'=>3,'lokasi'=>'yogyakarta','tipe'=>'villa','harga'=>170000000],
-
-            // BOGOR
-            ['img'=>1,'lokasi'=>'bogor','tipe'=>'rumah','harga'=>125000000],
-            ['img'=>2,'lokasi'=>'bogor','tipe'=>'apartement','harga'=>95000000],
-            ['img'=>3,'lokasi'=>'bogor','tipe'=>'villa','harga'=>180000000],
-
-            // BEKASI
-            ['img'=>1,'lokasi'=>'bekasi','tipe'=>'rumah','harga'=>135000000],
-            ['img'=>2,'lokasi'=>'bekasi','tipe'=>'apartement','harga'=>105000000],
-            ['img'=>3,'lokasi'=>'bekasi','tipe'=>'villa','harga'=>175000000],
-
-            // TANGERANG
-            ['img'=>1,'lokasi'=>'tangerang','tipe'=>'rumah','harga'=>145000000],
-            ['img'=>2,'lokasi'=>'tangerang','tipe'=>'apartement','harga'=>115000000],
-            ['img'=>3,'lokasi'=>'tangerang','tipe'=>'villa','harga'=>185000000],
-
-            // MALANG
-            ['img'=>1,'lokasi'=>'malang','tipe'=>'rumah','harga'=>120000000],
-            ['img'=>2,'lokasi'=>'malang','tipe'=>'apartement','harga'=>85000000],
-            ['img'=>3,'lokasi'=>'malang','tipe'=>'villa','harga'=>165000000],
-        ];
-        @endphp
-
-                <div class="row g-5">
-                @foreach ($properties as $item)
-                <div class="col-lg-4 col-md-6 col-12">
-
-                    <div class="card-property listing-card property-card"
-                        data-lokasi="{{ $item['lokasi'] }}"
-                        data-tipe="{{ $item['tipe'] }}"
-                        data-harga="{{ $item['harga'] }}">
-
-                        <div class="card-img">
-                            <img src="{{ asset('storage/images/properti '.$item['img'].'.png') }}">
-                        </div>
-
-                        <div class="card-content">
-                            <h5 class="lokasi">
-                                <i class="bi bi-geo-alt-fill"></i>
-                                {{ ucfirst($item['lokasi']) }}
-                            </h5>
-
-                            <p class="tipe-text">{{ ucfirst($item['tipe']) }}</p>
-
-                            <div class="info">
-                                <span><i class="ri-hotel-bed-line"></i> 4 Bed</span>
-                                <span><i class="ri-bar-chart-box-line"></i> 10x10 m</span>
-                                <span><i class="ri-line-chart-line"></i> 1600 m</span>
-                            </div>
-
-                            <div class="d-flex justify-content-between align-items-center">
-                               <a href="/pesan?source=sewa&tipe=Apartemen Sudirman&lokasi=Jakarta&harga=18000000&img=1" class="btn">
-                                    Pesan
-                                </a>
-                                <b class="price">
-                                    Rp {{ number_format($item['harga'], 0, ',', '.') }}
-                                </b>
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
+            <div class="row g-5" id="propertyGrid">
+                @foreach ($properties as $properti)
+                    @include('partials.property-card', ['properti' => $properti, 'pesanSource' => 'sewa'])
                 @endforeach
-                </div>           
-
+            </div>
             <p id="noResult" style="display:none; text-align:center; font-weight:700; margin-top:30px;">
                 Properti tidak ditemukan.
             </p>

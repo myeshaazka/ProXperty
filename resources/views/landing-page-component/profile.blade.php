@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - ProXperty</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
@@ -22,7 +23,7 @@
         <div class="profile-card">
             <div class="profile-top">
                 <div class="profile-img-wrap">
-                    <img src="{{ asset('storage/images/windah.png') }}" class="profile-img">
+                    <img src="{{ \App\Support\AppAssets::avatar() }}" class="profile-img" alt="Profile">
                     <button class="camera-btn">
                         <i class="bi bi-camera-fill"></i>
                     </button>
@@ -43,12 +44,14 @@
                     <span>Pesanan Saya</span>
                 </div>
 
+                @if(($userRole ?? '') === 'pemilik')
                 <h6>MANAJEMEN PROPERTI</h6>
 
                 <div class="profile-menu-item" id="listingBtn" onclick="setTab('listing')">
                     <i class="bi bi-house-door-fill"></i>
                     <span>Listing Saya</span>
                 </div>
+                @endif
 
                 <div class="profile-menu-item" id="inboxBtn" onclick="setTab('inbox')">
                     <i class="bi bi-envelope-fill"></i>
@@ -104,7 +107,7 @@
 
                     <div class="order-detail-img-box">
                         <span id="orderDetailStatus">AKTIF SEWA</span>
-                        <img id="orderDetailImage" src="{{ asset('storage/images/properti 1.png') }}">
+                        <img id="orderDetailImage" src="{{ \App\Support\AppAssets::property(1) }}" alt="Properti">
                     </div>
 
                     <h1 id="orderDetailTitle">Apartemen Sudirman</h1>
@@ -392,10 +395,29 @@
     <div class="alert alert-success">
         {{ session('success') }}
     </div>
-   
 @endif
 
 <script>
+const PROXPERTY_ROLE = @json($userRole ?? '');
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+let listingsCache = [];
+let ordersCache = [];
+
+async function apiFetch(url, options = {}) {
+    const headers = {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': csrfToken,
+        ...(options.headers || {}),
+    };
+
+    if (options.body && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(options.body);
+    }
+
+    return fetch(url, { ...options, headers });
+}
+
 function setTab(tab) {
     const tabs = ['profile', 'orders', 'listing', 'inbox', 'orderDetail', 'chatDetail'];
 
@@ -425,7 +447,7 @@ const orderData = {
         title: 'Apartemen Sudirman',
         location: 'Jakarta',
         status: 'AKTIF SEWA',
-        image: "{{ asset('storage/images/properti 1.png') }}",
+        image: "{{ \App\Support\AppAssets::property(1) }}",
         duration: '12 Bulan',
         time: '255 Hari',
         price: 'Rp 18.000.000 / bln',
@@ -436,7 +458,7 @@ const orderData = {
         title: 'Villa Greenlake',
         location: 'Bandung',
         status: 'AKTIF BELI',
-        image: "{{ asset('storage/images/properti 3.png') }}",
+        image: "{{ \App\Support\AppAssets::property(3) }}",
         duration: 'Permanen',
         time: 'Permanen',
         price: 'Rp 1.200.000.000',
@@ -517,7 +539,7 @@ function openPropertyModal() {
 function closePropertyModal() {
     document.getElementById('propertyModalOverlay')?.classList.remove('show');
     localStorage.removeItem('propertyModalStep');
-    localStorage.removeItem('editIndex');
+    localStorage.removeItem('editListingId');
     document.querySelector('.property-modal-form')?.reset();
 }
 
@@ -531,12 +553,21 @@ function goToStep(step) {
     localStorage.setItem('propertyModalStep', step);
 }
 
-function getListings() {
-    return JSON.parse(localStorage.getItem('listings')) || [];
+async function loadListings() {
+    if (PROXPERTY_ROLE !== 'pemilik') {
+        listingsCache = [];
+        renderListings();
+        return;
+    }
+
+    const response = await apiFetch('{{ url('/api/properti') }}');
+    const data = await response.json();
+    listingsCache = data.data || [];
+    renderListings();
 }
 
-function saveListings(listings) {
-    localStorage.setItem('listings', JSON.stringify(listings));
+function getListings() {
+    return listingsCache;
 }
 
 function renderListings() {
@@ -583,59 +614,62 @@ function renderListings() {
     `).join('');
 }
 
-function publishProperty() {
+async function publishProperty() {
     const title = document.getElementById('listingTitle').value.trim();
     const city = document.getElementById('propertyCity').value.trim();
     const bedroom = document.getElementById('bedroom').value || 0;
     const bathroom = document.getElementById('bathroom').value || 0;
     const area = document.getElementById('area').value || 0;
     const price = document.getElementById('propertyPrice').value || 0;
+    const type = document.getElementById('propertyType').value.trim() || 'rumah';
+    const address = document.getElementById('propertyAddress').value.trim();
 
     if (!title || !city || price <= 0) {
         alert('Isi judul, kota, dan harga dulu ya!');
         return;
     }
 
-    const listings = getListings();
-    const editIndex = localStorage.getItem('editIndex');
+    const editId = localStorage.getItem('editListingId');
+    const payload = { title, city, bedroom, bathroom, area, price, type, address };
 
-    const newData = {
-        title,
-        city,
-        bedroom,
-        bathroom,
-        area,
-        price,
-        image: "{{ asset('storage/images/properti 3.png') }}"
-    };
+    const response = await apiFetch(
+        editId ? `{{ url('/api/properti') }}/${editId}` : '{{ url('/api/properti') }}',
+        { method: editId ? 'PUT' : 'POST', body: payload }
+    );
 
-    if (editIndex !== null) {
-        listings[editIndex] = newData;
-        localStorage.removeItem('editIndex');
-    } else {
-        listings.unshift(newData);
+    const data = await response.json();
+
+    if (!response.ok) {
+        alert(data.message || 'Gagal menyimpan listing.');
+        return;
     }
 
-    saveListings(listings);
-    renderListings();
-
+    localStorage.removeItem('editListingId');
     document.querySelector('.property-modal-form')?.reset();
     closePropertyModal();
     setTab('listing');
+    await loadListings();
 }
 
-function deleteListing(index) {
+async function deleteListing(index) {
     if (!confirm('Yakin mau hapus listing ini?')) return;
 
-    const listings = getListings();
-    listings.splice(index, 1);
-    saveListings(listings);
-    renderListings();
+    const item = getListings()[index];
+    if (!item?.id) return;
+
+    const response = await apiFetch(`{{ url('/api/properti') }}/${item.id}`, { method: 'DELETE' });
+
+    if (!response.ok) {
+        alert('Gagal menghapus listing.');
+        return;
+    }
+
+    await loadListings();
 }
 
 function editListing(index) {
-    const listings = getListings();
-    const item = listings[index];
+    const item = getListings()[index];
+    if (!item) return;
 
     document.getElementById('listingTitle').value = item.title;
     document.getElementById('propertyCity').value = item.city;
@@ -643,12 +677,11 @@ function editListing(index) {
     document.getElementById('bathroom').value = item.bathroom;
     document.getElementById('area').value = item.area;
     document.getElementById('propertyPrice').value = item.price;
+    document.getElementById('propertyType').value = item.type || 'rumah';
 
-    localStorage.setItem('editIndex', index);
-
+    localStorage.setItem('editListingId', item.id);
     openPropertyModal();
     goToStep(1);
-
 }
 
 function showInboxTab(tab) {
@@ -668,23 +701,6 @@ function showInboxTab(tab) {
     localStorage.setItem('activeInboxTab', tab);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    let savedTab = localStorage.getItem('activeTab');
-    const validTabs = ['profile', 'orders', 'listing', 'inbox'];
-
-    if (!validTabs.includes(savedTab)) savedTab = 'profile';
-
-    setTab(savedTab);
-    showInboxTab(localStorage.getItem('activeInboxTab') || 'masuk');
-    renderListings();
-
-    document.body.classList.add('tab-ready');
-
-    document.getElementById('propertyModalOverlay')?.addEventListener('click', function(e) {
-        if (e.target === this) closePropertyModal();
-    });
-});
-
 let activeChatId = null;
 let activeInboxType = 'masuk';
 
@@ -699,7 +715,7 @@ function getChats() {
             type: 'masuk',
             name: 'Nadia Putri',
             role: 'Pembeli tertarik pada Rumah Cluster',
-            image: "{{ asset('storage/images/properti 3.png') }}",
+            image: "{{ \App\Support\AppAssets::property(3) }}",
             unread: true,
             messages: [
                 { from: 'other', text: 'Halo kak, apakah Rumah Cluster ini masih tersedia?' },
@@ -711,7 +727,7 @@ function getChats() {
             type: 'masuk',
             name: 'Raka Pratama',
             role: 'Penyewa tertarik pada Apartemen Sudirman',
-            image: "{{ asset('storage/images/properti 1.png') }}",
+            image: "{{ \App\Support\AppAssets::property(1) }}",
             unread: true,
             messages: [
                 { from: 'other', text: 'Halo, apartemennya bisa disewa untuk 12 bulan?' }
@@ -722,7 +738,7 @@ function getChats() {
             type: 'saya',
             name: 'Pemilik Villa Greenlake',
             role: 'Saya sebagai pembeli/penyewa',
-            image: "{{ asset('storage/images/properti 3.png') }}",
+            image: "{{ \App\Support\AppAssets::property(3) }}",
             unread: false,
             messages: [
                 { from: 'me', text: 'Halo kak, Villa Greenlake masih tersedia?' },
@@ -757,8 +773,15 @@ function renderChatLists() {
         .join('');
 }
 
+async function loadOrders() {
+    const response = await apiFetch('{{ url('/api/pesanan') }}');
+    const data = await response.json();
+    ordersCache = data.data || [];
+    renderProfileOrders();
+}
+
 function getProfileOrders() {
-    return JSON.parse(localStorage.getItem('profileOrders')) || [];
+    return ordersCache;
 }
 
 function renderProfileOrders() {
@@ -919,17 +942,18 @@ function backToInbox() {
     showInboxTab(activeInboxType || 'masuk');
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     let savedTab = localStorage.getItem('activeTab');
     const validTabs = ['profile', 'orders', 'listing', 'inbox'];
 
     if (!validTabs.includes(savedTab)) savedTab = 'profile';
+    if (savedTab === 'listing' && PROXPERTY_ROLE !== 'pemilik') savedTab = 'profile';
 
     setTab(savedTab);
     showInboxTab(localStorage.getItem('activeInboxTab') || 'masuk');
-    renderListings();
     renderChatLists();
-    renderProfileOrders();
+
+    await Promise.all([loadOrders(), loadListings()]);
 
     document.body.classList.add('tab-ready');
 
@@ -938,15 +962,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (localStorage.getItem('showProfilePopup') === 'true') {
-    const popup = document.getElementById('successPopup');
-    popup.classList.add('show');
-
-    setTimeout(() => {
-        popup.classList.remove('show');
-    }, 2000);
-
-    localStorage.removeItem('showProfilePopup');
-}
+        const popup = document.getElementById('successPopup');
+        popup.classList.add('show');
+        setTimeout(() => popup.classList.remove('show'), 2000);
+        localStorage.removeItem('showProfilePopup');
+    }
 });
 
 function saveProfile(e) {

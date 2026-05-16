@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pesan - ProXperty</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
@@ -26,15 +27,18 @@
 
         <div class="row align-items-center pesan-detail">
             <div class="col-lg-6">
-                <img src="{{ asset('storage/images/properti '.request('img', 1).'.png') }}" class="pesan-img">
+                @php
+                    $imgIndex = request('img', $properti ? (($properti->id % 3) + 1) : 1);
+                @endphp
+                <img src="{{ $properti ? \App\Support\PropertiPresenter::imageUrl($properti) : \App\Support\AppAssets::property($imgIndex) }}" class="pesan-img" alt="Properti">
             </div>
 
             <div class="col-lg-6 pesan-info">
-                <h1>{{ ucfirst(request('tipe', 'Rumah')) }}</h1>
+                <h1>{{ $properti?->nama_properti ?? ucfirst(request('tipe', 'Rumah')) }}</h1>
 
                 <h5>
                     <i class="bi bi-geo-alt-fill"></i>
-                    {{ ucfirst(request('lokasi', 'Semarang')) }}
+                    {{ $properti?->kota ?? ucfirst(request('lokasi', 'Semarang')) }}
                 </h5>
 
                 <div class="pesan-spec">
@@ -44,7 +48,7 @@
                 </div>
 
                 <h2 class="pesan-price">
-                    Rp {{ number_format(request('harga', 150000000), 0, ',', '.') }}
+                    Rp {{ number_format($properti?->harga_properti ?? request('harga', 150000000), 0, ',', '.') }}{{ request('source', 'sewa') === 'sewa' ? ' / bln' : '' }}
                 </h2>
             </div>
         </div>
@@ -72,59 +76,65 @@
 @include('landing-page-component.footer')
 
 <script>
-    function submitOrder() {
-        const params = new URLSearchParams(window.location.search);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
+    async function submitOrder() {
+        const params = new URLSearchParams(window.location.search);
         const source = params.get('source') || 'jual';
+        const propertiId = params.get('properti_id');
         const tipe = params.get('tipe') || 'Properti';
         const lokasi = params.get('lokasi') || 'Semarang';
-        const harga = params.get('harga') || 0;
         const img = params.get('img') || 1;
 
         const messageBox = document.getElementById('messageBox');
         const message = messageBox.value.trim() || `Halo, saya tertarik dengan ${tipe} di ${lokasi}.`;
 
-        const image = `/storage/images/properti ${img}.png`;
+        if (!propertiId) {
+            alert('Properti tidak valid.');
+            return;
+        }
 
-        const orders = JSON.parse(localStorage.getItem('profileOrders')) || [];
+        try {
+            const response = await fetch('{{ url('/pesanan') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({
+                    properti_id: propertiId,
+                    message: message,
+                    source: source,
+                }),
+            });
 
-        orders.unshift({
-            id: Date.now(),
-            source: source,
-            title: tipe,
-            location: lokasi,
-            price: harga,
-            image: image,
-            status: source === 'sewa' ? 'SEWA' : 'BELI',
-            duration: source === 'sewa' ? '12 Bulan' : 'Permanen',
-            time: source === 'sewa' ? '365 hari' : 'Permanen'
-        });
+            const data = await response.json();
 
-        localStorage.setItem('profileOrders', JSON.stringify(orders));
+            if (!response.ok) {
+                alert(data.message || 'Gagal mengirim pesanan.');
+                return;
+            }
 
-        const chats = JSON.parse(localStorage.getItem('proxpertyChats')) || [];
+            const image = data.order?.image || `{{ url('/images') }}/properti-${img}.svg`;
+            const chats = JSON.parse(localStorage.getItem('proxpertyChats')) || [];
 
-        chats.unshift({
-            id: 'sent-' + Date.now(),
-            type: 'saya',
-            name: source === 'sewa' ? `Pemilik ${tipe}` : `Penjual ${tipe}`,
-            role: source === 'sewa'
-                ? 'Saya sebagai penyewa'
-                : 'Saya sebagai pembeli',
-            image: image,
-            unread: false,
-            messages: [
-                {
-                    from: 'me',
-                    text: message
-                }
-            ]
-        });
+            chats.unshift({
+                id: 'sent-' + Date.now(),
+                type: 'saya',
+                name: source === 'sewa' ? `Pemilik ${tipe}` : `Penjual ${tipe}`,
+                role: source === 'sewa' ? 'Saya sebagai penyewa' : 'Saya sebagai pembeli',
+                image: image,
+                unread: false,
+                messages: [{ from: 'me', text: message }],
+            });
 
-        localStorage.setItem('proxpertyChats', JSON.stringify(chats));
-
-        localStorage.setItem('activeTab', 'orders');
-        window.location.href = '/profile';
+            localStorage.setItem('proxpertyChats', JSON.stringify(chats));
+            localStorage.setItem('activeTab', 'orders');
+            window.location.href = '/profile';
+        } catch (error) {
+            alert('Terjadi kesalahan. Coba lagi.');
+        }
     }
 </script>
 

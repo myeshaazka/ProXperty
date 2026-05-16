@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c5e8d4"/>
+      <stop offset="100%" style="stop-color:#8fd4a8"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#bg3)"/>
+  <ellipse cx="320" cy="320" rx="200" ry="40" fill="#6b9e78" opacity="0.4"/>
+  <rect x="160" y="160" width="320" height="140" rx="10" fill="#fff" opacity="0.95"/>
+  <polygon points="320,90 120,170 520,170" fill="#3d6b4f"/>
+  <rect x="280" y="210" width="80" height="90" fill="#5a9e6f"/>
+  <text x="320" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" fill="#1a3a2e">Villa</text>
+</svg>

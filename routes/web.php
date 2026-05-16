@@ -1,105 +1,34 @@
 <?php
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PesananController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PropertyPageController;
+use App\Http\Controllers\PropertiController;
+use App\Http\Middleware\EnsureAuthenticated;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 
-Route::get('/', function (Request $request) {
-    return view('landing-page-component.index', [
-        'isLogin' => $request->session()->get('login', false)
-    ]);
-});
+Route::get('/', [PropertyPageController::class, 'home']);
+Route::get('/disewa', [PropertyPageController::class, 'disewa']);
+Route::get('/dijual', [PropertyPageController::class, 'dijual']);
+Route::get('/about', [PropertyPageController::class, 'about']);
 
-Route::get('/signin', function (Request $request) {
-    if ($request->session()->get('login')) {
-        return redirect('/');
-    }
+Route::get('/signin', [AuthController::class, 'showSignIn']);
+Route::post('/signin', [AuthController::class, 'signIn']);
+Route::get('/signup', [AuthController::class, 'showSignUp']);
+Route::post('/signup', [AuthController::class, 'signUp']);
+Route::get('/logout', [AuthController::class, 'logout']);
 
-    return view('auth.signin');
-});
+Route::middleware(EnsureAuthenticated::class)->group(function () {
+    Route::get('/pesan', [PropertyPageController::class, 'pesan']);
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::post('/update-profile', [ProfileController::class, 'update']);
 
-Route::get('/signup', function (Request $request) {
-    if ($request->session()->get('login')) {
-        return redirect('/');
-    }
+    Route::post('/pesanan', [PesananController::class, 'store']);
+    Route::get('/api/pesanan', [PesananController::class, 'index']);
 
-    return view('auth.signup');
-});
-
-
-Route::get('/do-signup', function (Request $request) {
-
-    $request->session()->put('name', $request->name);
-    $request->session()->put('email', $request->email);
-    $request->session()->put('phone', $request->phone);
-    $request->session()->put('registered', true);
-
-    return redirect('/signin');
-});
-
-Route::get('/do-signin', function (Request $request) {
-
-    if (!$request->session()->get('registered')) {
-        return redirect('/signup');
-    }
-
-    $request->session()->put('login', true);
-
-    return redirect('/');
-});
-
-Route::get('/rent', function (Request $request) {
-    if (!$request->session()->get('login')) {
-        return redirect('/signin');
-    }
-
-    return 'Halaman sewa properti';
-});
-
-Route::get('/logout', function (Request $request) {
-    $request->session()->forget('login');
-
-    return redirect('/');
-});
-
-
-Route::get('/dijual', function (Request $request) {
-    return view('landing-page-component.dijual', [
-        'isLogin' => $request->session()->get('login', false)
-    ]);
-});
-
-Route::get('/pesan', function (Request $request) {
-    if (!$request->session()->get('login')) {
-        return redirect('/signin');
-    }
-
-    return view('landing-page-component.pesan');
-});
-
-Route::get('/disewa', function (Request $request) {
-    return view('landing-page-component.disewa', [
-        'isLogin' => $request->session()->get('login', false)
-    ]);
-});
-
-Route::get('/about', function (Request $request) {
-    return view('landing-page-component.about', [
-        'isLogin' => $request->session()->get('login', false)
-    ]);
-});
-
-Route::get('/profile', function (Request $request) {
-    if (!$request->session()->get('login')) {
-        return redirect('/signin');
-    }
-
-    return view('landing-page-component.profile');
-});
-
-Route::post('/update-profile', function (Request $request) {
-    $request->session()->put('name', $request->name);
-    $request->session()->put('email', $request->email);
-    $request->session()->put('phone', $request->phone);
-
-    return redirect('/profile')->with('success', 'Profil berhasil diperbarui!');
+    Route::get('/api/properti', [PropertiController::class, 'index']);
+    Route::post('/api/properti', [PropertiController::class, 'store']);
+    Route::put('/api/properti/{id}', [PropertiController::class, 'update']);
+    Route::delete('/api/properti/{id}', [PropertiController::class, 'destroy']);
 });

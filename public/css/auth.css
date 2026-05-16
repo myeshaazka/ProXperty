@@ -117,6 +117,38 @@ body {
     color: #000;
 }
 
+.role-select-wrap select {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
+}
+
+.auth-error {
+    background: #ffe5e5;
+    color: #b00020;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.auth-success {
+    background: #e5f8ed;
+    color: #0d6b2e;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
 .password-note,
 .password-strength {
     width: 80%;

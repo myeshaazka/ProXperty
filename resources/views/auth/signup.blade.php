@@ -14,21 +14,35 @@
     <div class="auth-card signup-card">
         <h1>Sign up to continue</h1>
 
-        <form action="/do-signup" method="GET">
+        @if ($errors->any())
+            <div class="auth-error">{{ $errors->first() }}</div>
+        @endif
+
+        <form action="{{ url('/signup') }}" method="POST">
+            @csrf
+
+            <div class="auth-input role-select-wrap">
+                <i class="bi bi-person-badge-fill"></i>
+                <select name="role" required>
+                    <option value="">Pilih peran</option>
+                    <option value="penyewa" @selected(old('role') === 'penyewa')>Penyewa</option>
+                    <option value="pemilik" @selected(old('role') === 'pemilik')>Pemilik Properti</option>
+                </select>
+            </div>
 
             <div class="auth-input">
                 <i class="bi bi-person-fill"></i>
-                <input type="text" name="name" placeholder="Name" required>
+                <input type="text" name="name" placeholder="Name" value="{{ old('name') }}" required>
             </div>
 
             <div class="auth-input">
                 <i class="bi bi-telephone-fill"></i>
-                <input type="text" name="phone" placeholder="Phone Number" required>
+                <input type="text" name="phone" placeholder="Phone Number" value="{{ old('phone') }}" required>
             </div>
 
             <div class="auth-input">
                 <i class="bi bi-envelope-fill"></i>
-                <input type="email" name="email" placeholder="Email" required>
+                <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required>
             </div>
 
             <!-- PASSWORD -->
@@ -57,8 +71,12 @@
             <div id="strength" class="password-strength"></div>
 
             <button type="submit" class="auth-btn">Sign Up</button>
-
         </form>
+
+        <p class="auth-link-text">
+            Already have an account?
+            <a href="{{ url('/signin') }}">Sign In</a>
+        </p>
     </div>
 </section>
 

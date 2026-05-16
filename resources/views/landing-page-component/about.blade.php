@@ -24,7 +24,7 @@
         <div class="about-main row align-items-center">
             <div class="col-lg-4">
                 <div class="about-full-img">
-                    <img src="{{ asset('storage/images/tentang kami.png') }}" alt="Tentang Kami">
+                    <img src="{{ \App\Support\AppAssets::about() }}" alt="Tentang Kami">
                 </div>
             </div>
 
@@ -94,7 +94,7 @@
             <div class="row g-4">
                 <div class="col-lg-6">
                     <div class="testimoni-card">
-                        <img src="{{ asset('storage/images/windah.png') }}" class="testimoni-img" alt="User">
+                        <img src="{{ \App\Support\AppAssets::avatar() }}" class="testimoni-img" alt="User">
 
                         <i class="bi bi-quote quote-icon"></i>
 
@@ -113,7 +113,7 @@
 
                 <div class="col-lg-6">
                     <div class="testimoni-card">
-                        <img src="{{ asset('storage/images/kim.png') }}" class="testimoni-img" alt="User">
+                        <img src="{{ \App\Support\AppAssets::avatar() }}" class="testimoni-img" alt="User">
 
                         <i class="bi bi-quote quote-icon"></i>
 

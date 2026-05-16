@@ -27,7 +27,7 @@
             </div>
 
             <div class="col-lg-6 d-flex justify-content-end align-items-center">
-                <img src="{{ asset('storage/images/headline.png') }}" class="img-fluid">
+                <img src="{{ \App\Support\AppAssets::headline() }}" class="img-fluid" alt="Hero">
             </div>
         </div>
     </div>

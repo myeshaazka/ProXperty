@@ -26,7 +26,7 @@
                 <div class="card-property">
 
                     <div class="card-img">
-                        <img src="{{ asset('storage/images/properti 1.png') }}">
+                        <img src="{{ \App\Support\AppAssets::property(1) }}" alt="Properti">
                     </div>
 
                     <div class="card-content">
@@ -55,7 +55,7 @@
                 <div class="card-property">
 
                     <div class="card-img">
-                        <img src="{{ asset('storage/images/properti 2.png') }}">
+                        <img src="{{ \App\Support\AppAssets::property(2) }}" alt="Properti">
                     </div>
 
                     <div class="card-content">
@@ -84,7 +84,7 @@
                 <div class="card-property">
 
                     <div class="card-img">
-                        <img src="{{ asset('storage/images/properti 3.png') }}">
+                        <img src="{{ \App\Support\AppAssets::property(3) }}" alt="Properti">
                     </div>
 
                     <div class="card-content">
